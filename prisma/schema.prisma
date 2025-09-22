@@ -1,0 +1,518 @@
+// SaaS Spec-Driven Development Database Schema
+// Extends saas-ecosystem-architecture primary schema for specification management
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Import shared models from saas-ecosystem-architecture
+// These models are defined in the primary schema and referenced here
+
+// Specification Management Models
+
+model Specification {
+  id              String                @id @default(cuid())
+  title           String
+  description     String?
+  version         String                @default("1.0.0")
+  status          SpecificationStatus   @default(DRAFT)
+  type            SpecificationType
+  organizationId  String
+  createdBy       String
+  assignedTo      String?
+  
+  // Content and structure
+  content         Json
+  metadata        Json?
+  tags            String[]
+  
+  // Relationships
+  requirements    Requirement[]
+  implementations Implementation[]
+  validations     SpecValidation[]
+  approvals       SpecApproval[]
+  
+  // Timestamps
+  createdAt       DateTime              @create_at @default(now())
+  updatedAt       DateTime              @updatedAt
+  approvedAt      DateTime?
+  publishedAt     DateTime?
+  
+  @@map("specifications")
+  @@index([organizationId])
+  @@index([status])
+  @@index([type])
+  @@index([createdBy])
+}
+
+model Requirement {
+  id               String              @id @default(cuid())
+  specificationId  String
+  title            String
+  description      String
+  priority         RequirementPriority @default(MEDIUM)
+  status           RequirementStatus   @default(PENDING)
+  type             RequirementType
+  
+  // Content
+  acceptanceCriteria Json
+  constraints        Json?
+  dependencies       String[]
+  
+  // Relationships
+  specification      Specification @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+  validations        ReqValidation[]
+  implementations    Implementation[]
+  
+  // Timestamps
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  resolvedAt         DateTime?
+  
+  @@map("requirements")
+  @@index([specificationId])
+  @@index([status])
+  @@index([priority])
+}
+
+model Implementation {
+  id              String               @id @default(cuid())
+  specificationId String
+  requirementId   String?
+  title           String
+  description     String?
+  status          ImplementationStatus @default(PLANNED)
+  type            ImplementationType
+  
+  // Implementation details
+  repository      String?
+  branch          String?
+  pullRequestUrl  String?
+  deploymentUrl   String?
+  
+  // Progress tracking
+  progress        Float                @default(0.0)
+  estimatedHours  Float?
+  actualHours     Float?
+  startDate       DateTime?
+  targetDate      DateTime?
+  completedDate   DateTime?
+  
+  // Relationships
+  specification   Specification        @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+  requirement     Requirement?         @relation(fields: [requirementId], references: [id])
+  validations     ImplValidation[]
+  
+  // Metadata
+  metadata        Json?
+  tags            String[]
+  
+  // Timestamps
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  
+  @@map("implementations")
+  @@index([specificationId])
+  @@index([status])
+  @@index([type])
+}
+
+model SpecValidation {
+  id              String           @id @default(cuid())
+  specificationId String
+  validatorId     String           // User or AI agent ID
+  validationType  ValidationType
+  status          ValidationStatus @default(PENDING)
+  
+  // Validation results
+  score           Float?
+  feedback        String?
+  issues          Json?            // Array of validation issues
+  suggestions     Json?            // Array of improvement suggestions
+  
+  // Relationships
+  specification   Specification    @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  completedAt     DateTime?
+  
+  @@map("spec_validations")
+  @@index([specificationId])
+  @@index([status])
+  @@index([validationType])
+}
+
+model ReqValidation {
+  id            String           @id @default(cuid())
+  requirementId String
+  validatorId   String
+  status        ValidationStatus @default(PENDING)
+  
+  // Validation results
+  score         Float?
+  feedback      String?
+  issues        Json?
+  suggestions   Json?
+  
+  // Relationships
+  requirement   Requirement      @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  completedAt   DateTime?
+  
+  @@map("req_validations")
+  @@index([requirementId])
+  @@index([status])
+}
+
+model ImplValidation {
+  id               String           @id @default(cuid())
+  implementationId String
+  validatorId      String
+  status           ValidationStatus @default(PENDING)
+  
+  // Validation results
+  score            Float?
+  feedback         String?
+  issues           Json?
+  suggestions      Json?
+  
+  // Test results
+  testsPassed      Int?
+  testsTotal       Int?
+  coverage         Float?
+  
+  // Relationships
+  implementation   Implementation   @relation(fields: [implementationId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  completedAt      DateTime?
+  
+  @@map("impl_validations")
+  @@index([implementationId])
+  @@index([status])
+}
+
+model SpecApproval {
+  id              String          @id @default(cuid())
+  specificationId String
+  approverId      String
+  status          ApprovalStatus  @default(PENDING)
+  level           ApprovalLevel
+  
+  // Approval details
+  comments        String?
+  conditions      Json?           // Conditional approval requirements
+  
+  // Relationships
+  specification   Specification   @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  reviewedAt      DateTime?
+  
+  @@map("spec_approvals")
+  @@index([specificationId])
+  @@index([status])
+  @@index([level])
+}
+
+// AI Agent Integration Models
+
+model SpecAgent {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  description     String?
+  type            SpecAgentType
+  status          AgentStatus     @default(ACTIVE)
+  
+  // Agent configuration
+  configuration   Json
+  capabilities    String[]
+  
+  // Performance metrics
+  tasksCompleted  Int             @default(0)
+  successRate     Float           @default(0.0)
+  avgProcessTime  Float           @default(0.0)
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  lastActiveAt    DateTime?
+  
+  @@map("spec_agents")
+  @@index([type])
+  @@index([status])
+}
+
+model AgentTask {
+  id          String          @id @default(cuid())
+  agentId     String
+  taskType    AgentTaskType
+  status      AgentTaskStatus @default(PENDING)
+  priority    TaskPriority    @default(MEDIUM)
+  
+  // Task details
+  input       Json
+  output      Json?
+  metadata    Json?
+  
+  // Progress tracking
+  progress    Float           @default(0.0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  // Error handling
+  error       String?
+  retryCount  Int             @default(0)
+  maxRetries  Int             @default(3)
+  
+  // Relationships
+  agent       SpecAgent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  @@map("agent_tasks")
+  @@index([agentId])
+  @@index([status])
+  @@index([taskType])
+}
+
+// Cross-Repository Coordination Models
+
+model RepositorySync {
+  id              String           @id @default(cuid())
+  repository      String           // Repository name
+  syncType        SyncType
+  status          SyncStatus       @default(PENDING)
+  
+  // Sync details
+  sourceCommit    String?
+  targetCommit    String?
+  changes         Json?            // Array of changes
+  conflicts       Json?            // Array of conflicts
+  
+  // Timestamps
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  @@map("repository_syncs")
+  @@index([repository])
+  @@index([status])
+  @@index([syncType])
+}
+
+model DeploymentCoordination {
+  id               String              @id @default(cuid())
+  name             String
+  repositories     String[]            // Array of repository names
+  status           DeploymentStatus    @default(PLANNED)
+  
+  // Deployment details
+  strategy         DeploymentStrategy  @default(SEQUENTIAL)
+  environment      String              @default("staging")
+  configuration    Json?
+  
+  // Progress tracking
+  currentStep      String?
+  progress         Float               @default(0.0)
+  
+  // Timestamps
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  scheduledAt      DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  
+  @@map("deployment_coordinations")
+  @@index([status])
+  @@index([environment])
+}
+
+// Enum Definitions
+
+enum SpecificationStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  PUBLISHED
+  DEPRECATED
+  ARCHIVED
+}
+
+enum SpecificationType {
+  FUNCTIONAL
+  TECHNICAL
+  API
+  DATABASE
+  SECURITY
+  PERFORMANCE
+  UI_UX
+  INTEGRATION
+}
+
+enum RequirementPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RequirementStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+  CANCELLED
+}
+
+enum RequirementType {
+  FUNCTIONAL
+  NON_FUNCTIONAL
+  BUSINESS
+  TECHNICAL
+  CONSTRAINT
+}
+
+enum ImplementationStatus {
+  PLANNED
+  IN_PROGRESS
+  TESTING
+  COMPLETED
+  DEPLOYED
+  FAILED
+  CANCELLED
+}
+
+enum ImplementationType {
+  FEATURE
+  BUG_FIX
+  ENHANCEMENT
+  REFACTOR
+  DOCUMENTATION
+  TESTING
+}
+
+enum ValidationType {
+  COMPLETENESS
+  CONSISTENCY
+  FEASIBILITY
+  COMPLIANCE
+  QUALITY
+  AUTOMATED
+}
+
+enum ValidationStatus {
+  PENDING
+  IN_PROGRESS
+  PASSED
+  FAILED
+  SKIPPED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CONDITIONAL
+}
+
+enum ApprovalLevel {
+  TECHNICAL
+  BUSINESS
+  SECURITY
+  FINAL
+}
+
+enum SpecAgentType {
+  REQUIREMENTS_ANALYZER
+  SPEC_GENERATOR
+  DOCUMENTATION_GENERATOR
+  QUALITY_VALIDATOR
+  CODE_VALIDATOR
+  TEST_GENERATOR
+  DEPLOYMENT_COORDINATOR
+  PERFORMANCE_MONITOR
+}
+
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  ERROR
+}
+
+enum AgentTaskType {
+  ANALYZE_REQUIREMENTS
+  GENERATE_SPECIFICATION
+  VALIDATE_SPECIFICATION
+  GENERATE_DOCUMENTATION
+  VALIDATE_CODE
+  GENERATE_TESTS
+  COORDINATE_DEPLOYMENT
+  MONITOR_PERFORMANCE
+}
+
+enum AgentTaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SyncType {
+  SCHEMA
+  CONFIGURATION
+  DOCUMENTATION
+  CODE
+  DEPLOYMENT
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CONFLICT
+}
+
+enum DeploymentStatus {
+  PLANNED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+enum DeploymentStrategy {
+  SEQUENTIAL
+  PARALLEL
+  BLUE_GREEN
+  ROLLING
+  CANARY
+}
