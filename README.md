@@ -1,4 +1,4 @@
-# SaaS Spec-Driven Development Platform
+# SaaS Architecture Spec-Kit (saasarch speckit)
 
 **Enterprise-grade spec-driven development platform integrating GitHub Spec-Kit methodology with SaaS Architecture ecosystem**
 
@@ -6,9 +6,13 @@
 [![Build Status](https://github.com/vbonk/saas-spec-driven-development/workflows/CI/badge.svg)](https://github.com/vbonk/saas-spec-driven-development/actions)
 [![Security Rating](https://img.shields.io/badge/Security-A+-green.svg)](https://github.com/vbonk/saas-spec-driven-development/security)
 
+---
+
 ## Overview
 
-The SaaS Spec-Driven Development Platform transforms chaotic AI-assisted development into systematic, enterprise-grade software development through structured methodology and comprehensive platform integration. By combining GitHub's proven Spec-Kit methodology with advanced SaaS architecture capabilities, the platform delivers unprecedented development consistency, quality, and scalability.
+The SaaS Architecture Spec-Kit (saasarch speckit) is an innovative platform that enhances the existing `saasarch` framework with a systematic, spec-driven approach to AI agent development. It transforms chaotic AI-assisted development into systematic, enterprise-grade software development through structured methodology and comprehensive platform integration.
+
+This platform provides a comprehensive ecosystem of specialized AI agents that work together to transform specifications into high-quality, production-ready applications, ensuring constitutional compliance and enforcing enterprise-grade security and quality standards throughout the entire software development lifecycle.
 
 ### Key Value Propositions
 
@@ -18,13 +22,25 @@ The SaaS Spec-Driven Development Platform transforms chaotic AI-assisted develop
 
 **Advanced AI Agent Orchestration** coordinates multiple AI coding assistants including GitHub Copilot, Claude Code, Gemini CLI, Cursor, Windsurf, Qwen CLI, and OpenCode through standardized interfaces and intelligent load balancing. This multi-agent approach leverages the strengths of different AI services while preventing conflicts and ensuring consistency.
 
-**Organizational Knowledge Management** captures and reuses development patterns, architectural decisions, and best practices across projects and teams. The platform learns from organizational experience to provide increasingly intelligent recommendations and accelerate development velocity.
+**Constitutional Compliance** enforces development principles, security standards, and quality guidelines through a central Constitution Service that acts as the system's backbone. All other agents and services in the ecosystem must comply with the principles enforced by the Constitution Service.
 
-## Architecture Overview
+## System Architecture
 
-### Microservices Architecture
+The saasarch speckit platform is built on a microservices-based architecture with a central Constitution Service that acts as the system's backbone. The platform implements a distributed microservices architecture with five core services that correspond to the Spec-Kit methodology phases.
 
-The platform implements a distributed microservices architecture with five core services that correspond to the Spec-Kit methodology phases:
+```mermaid
+graph TD
+    A[Constitution Service] --> B[Specification Agent]
+    A --> C[Planning Agent]
+    A --> D[Task Agent]
+    A --> E[Implementation Agent]
+    B --> C
+    C --> D
+    D --> E
+    E --> F[Production Application]
+```
+
+### Core Components
 
 **Constitution Service** manages project principles, development guidelines, and organizational governance within the multi-tenant environment. This service ensures consistent application of organizational standards and compliance requirements across all development projects.
 
@@ -35,6 +51,13 @@ The platform implements a distributed microservices architecture with five core 
 **Task Management Service** breaks down specifications into actionable tasks with sophisticated dependency management and parallel execution coordination. The service optimizes resource allocation and provides real-time progress tracking and analytics.
 
 **Implementation Service** coordinates AI agent execution, code generation, quality assurance, and deployment management. This service ensures generated code meets organizational standards and integrates seamlessly with existing development workflows.
+
+### Specialized Agents
+
+- **Agent Builder**: Creates new AI agents based on specifications and requirements.
+- **UI Architect Agent**: Designs and implements modern user interfaces following accessibility and design standards.
+- **Crawler Agent**: Performs web crawling and data extraction with privacy and compliance awareness.
+- **Prompt Researcher**: Researches and optimizes prompts for AI interactions and agent communications.
 
 ### Technology Stack
 
@@ -49,6 +72,7 @@ The platform implements a distributed microservices architecture with five core 
 
 ### Prerequisites
 
+<<<<<<< HEAD
 Before setting up the SaaS Spec-Driven Development Platform, ensure you have the following prerequisites installed and configured:
 
 - **Docker and Docker Compose** (version 20.10 or higher) for containerized development and deployment
@@ -287,3 +311,73 @@ The platform is designed to meet enterprise compliance requirements including SO
 **Documentation**: [docs.saas-spec-driven-development.com](https://docs.saas-spec-driven-development.com)  
 **Support**: [support@saas-spec-driven-development.com](mailto:support@saas-spec-driven-development.com)  
 **Community**: [community.saas-spec-driven-development.com](https://community.saas-spec-driven-development.com)
+=======
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [TypeScript](https://www.typescriptlang.org/)
+- [PostgreSQL](https://www.postgresql.org/) (with pgvector extension)
+- [Python](https://www.python.org/) (v3.9 or later)
+
+### Installation
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/vbonk/app-agents.git
+    cd saas-spec-driven-development
+    ```
+
+2.  **Install dependencies for the Constitution Service:**
+
+    ```bash
+    cd services/constitution-service
+    npm install
+    ```
+
+3.  **Set up the database:**
+
+    - Create a PostgreSQL database named `constitution_service`.
+    - Enable the `pgvector` extension.
+    - Configure your database connection in `services/constitution-service/.env`.
+
+4.  **Run database migrations:**
+
+    ```bash
+    npx prisma migrate dev --name init
+    ```
+
+5.  **Seed the database:**
+
+    ```bash
+    npm run db:seed
+    ```
+
+6.  **Start the Constitution Service:**
+
+    ```bash
+    npm run dev
+    ```
+
+### Running Tests
+
+To run the comprehensive test suite, use the test runner script:
+
+```bash
+./scripts/run_tests.py
+```
+
+## Documentation
+
+- **[User Guide](./docs/USER_GUIDE.md)**: A comprehensive guide for using the SaaS Spec-Driven Development Platform.
+- **[Agent Registry](./docs/AGENT_REGISTRY.md)**: A complete registry of all AI agents in the system.
+- **[Constitution Integration](./docs/CONSTITUTION_INTEGRATION.md)**: A guide for integrating the Constitution Service with existing agents.
+- **[System Overview](./docs/SYSTEM_OVERVIEW.md)**: A comprehensive overview of the entire system.
+
+## Contributing
+
+We welcome contributions to the saasarch speckit platform! Please see our contributing guidelines for more information.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+>>>>>>> main
